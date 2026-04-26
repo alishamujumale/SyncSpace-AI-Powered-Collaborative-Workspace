@@ -47,6 +47,7 @@ app.use(passport.session());
 // Routes
 app.use('/auth', require('./routes/auth'));
 app.use('/api/documents', require('./routes/documents'));
+app.use('/api/comments', require('./routes/comments'));
 
 // Test route
 app.get('/', (req, res) => {
