@@ -28,6 +28,8 @@ const io = new Server(server, {
 
 // Load socket logic
 require('./sockets/documentSocket')(io);
+require('./sockets/chatSocket')(io);
+require('./sockets/taskSocket')(io);
 
 // Middleware
 app.use(cors({
@@ -61,6 +63,10 @@ app.use(passport.session());
 app.use('/auth', require('./routes/auth'));
 app.use('/api/documents', require('./routes/documents'));
 app.use('/api/comments', require('./routes/comments'));
+app.use('/api/rooms', require('./routes/rooms'));
+app.use('/api/tasks', require('./routes/tasks'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/ai', require('./routes/ai'));
 
 // Test route
 app.get('/', (req, res) => {
