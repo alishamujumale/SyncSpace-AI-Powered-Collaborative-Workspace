@@ -1,16 +1,16 @@
-const OpenAI = require('openai');
+const Groq = require('groq-sdk');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY
 });
 
-// Generate full project plan from idea
 const generateProjectPlan = async (idea) => {
-  const prompt = `
+  try {
+    const prompt = `
 You are an expert project manager and software architect.
 A user wants to build: "${idea}"
 
-Generate a detailed project plan in the following JSON format only, no extra text:
+Generate a detailed project plan in the following JSON format only, no extra text, no markdown:
 {
   "projectName": "string",
   "summary": "string",
@@ -20,7 +20,7 @@ Generate a detailed project plan in the following JSON format only, no extra tex
       "title": "string",
       "description": "string",
       "priority": "low|medium|high",
-      "deadline": "number of days from today",
+      "deadline": 7,
       "suggestedRole": "string"
     }
   ],
@@ -28,20 +28,28 @@ Generate a detailed project plan in the following JSON format only, no extra tex
   "timeline": "string"
 }`;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7
-  });
+    const response = await groq.chat.completions.create({
+      model: 'llama3-8b-8192',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7
+    });
 
-  const text = response.choices[0].message.content;
-  return JSON.parse(text);
+    const text = response.choices[0].message.content;
+    console.log('AI raw response:', text);
+
+    // Clean response in case model adds markdown
+    const cleaned = text.replace(/```json|```/g, '').trim();
+    return JSON.parse(cleaned);
+  } catch (error) {
+    console.error('Groq error:', error.message);
+    throw error;
+  }
 };
 
-// Answer questions about the project
 const askAssistant = async (question, context) => {
-  const prompt = `
-You are a helpful project management assistant for a team workspace called SyncSpace.
+  try {
+    const prompt = `
+You are a helpful project management assistant for SyncSpace.
 
 Current project context:
 ${context}
@@ -50,31 +58,42 @@ User question: "${question}"
 
 Give a short, helpful, direct answer in plain text.`;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.5
-  });
+    const response = await groq.chat.completions.create({
+      model: 'llama3-8b-8192',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.5
+    });
 
-  return response.choices[0].message.content;
+    return response.choices[0].message.content;
+  } catch (error) {
+    console.error('Groq error:', error.message);
+    throw error;
+  }
 };
 
-// Summarize chat messages
 const summarizeChat = async (messages) => {
-  const chatText = messages.map(m => `${m.sender.name}: ${m.text}`).join('\n');
+  try {
+    const chatText = messages
+      .map(m => `${m.sender.name}: ${m.text}`)
+      .join('\n');
 
-  const prompt = `
-Summarize this team chat in 3-4 bullet points. Focus on decisions made and action items:
+    const prompt = `
+Summarize this team chat in 3-4 bullet points.
+Focus on decisions made and action items:
 
 ${chatText}`;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.5
-  });
+    const response = await groq.chat.completions.create({
+      model: 'llama3-8b-8192',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.5
+    });
 
-  return response.choices[0].message.content;
+    return response.choices[0].message.content;
+  } catch (error) {
+    console.error('Groq error:', error.message);
+    throw error;
+  }
 };
 
 module.exports = { generateProjectPlan, askAssistant, summarizeChat };
